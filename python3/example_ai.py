@@ -112,6 +112,17 @@ def play_game(
                     me.energy -= cell.attack_cost
                     my_attack_list.append(cell.position)
 
+            if me.tech_level == 1 and me.gold > 1000 and me.energy > 1000:
+                cmd_list.append(game.upgrade(user_homes[my_uid].position))
+                print("We upgraded home at ({}, {})".format(user_homes[my_uid].position.x, user_homes[my_uid].position.y))
+                me.gold -= 1000
+                me.energy -= 1000
+            elif me.tech_level == 2 and me.gold > 2000 and me.energy > 2000:
+                cmd_list.append(game.upgrade(user_homes[my_uid].position))
+                print("We upgraded home at ({}, {})".format(user_homes[my_uid].position.x, user_homes[my_uid].position.y))
+                me.gold -= 2000
+                me.energy -= 2000
+
             # game.me.cells is a dict, where the keys are Position and the values
             # are MapCell. Get all my cells.
             my_cells = get_my_cells(me.cells.values())
@@ -136,16 +147,7 @@ def play_game(
                     me.gold   -= cell.building.upgrade_gold
                     me.energy -= cell.building.upgrade_energy
 
-            if me.tech_level == 1 and me.gold > 1000 and me.energy > 1000:
-                cmd_list.append(game.upgrade(user_homes[my_uid].position))
-                print("We upgraded home at ({}, {})".format(user_homes[my_uid].position.x, user_homes[my_uid].position.y))
-                me.gold -= 1000
-                me.energy -= 1000
-            elif me.tech_level == 2 and me.gold > 2000 and me.energy > 2000:
-                cmd_list.append(game.upgrade(user_homes[my_uid].position))
-                print("We upgraded home at ({}, {})".format(user_homes[my_uid].position.x, user_homes[my_uid].position.y))
-                me.gold -= 2000
-                me.energy -= 2000
+            
 
             # for cell in me.cells.values():
                 # Check the surrounding position
@@ -187,7 +189,6 @@ def play_game(
                     print("We build {} on ({}, {})".format(building, cell.position.x, cell.position.y))
                     me.gold -= 100'''
     
-            
             # Send the command list to the server
             result = game.send_cmd(cmd_list)
             print(result)
