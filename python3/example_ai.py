@@ -12,9 +12,9 @@ nat_energy_weight = 0.1
 user_homes = {}
 my_uid = 0
 energy_well_cnt = 0
-convert_ratio = 1/3
+convert_ratio = 1/2
 threshold = 150
-building_threshold = 125
+building_threshold = 100
 cur_game = None
 
 def get_homes():
@@ -147,7 +147,7 @@ def play_game(
                     if(len(me.cells) / (game.width * game.height) > convert_ratio):
                         building = BLD_GOLD_MINE
                     if not (energy_well_cnt % 4) and energy_well_cnt != 0:
-                        building = BLD_FORTRESS
+                        building = BLD_GOLD_MINE
 
                     cmd_list.append(game.build(cell.position, building))
                     print("We build {} on ({}, {})".format(building, cell.position.x, cell.position.y))
