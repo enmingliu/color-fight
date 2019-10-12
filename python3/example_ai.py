@@ -5,10 +5,10 @@ import math
 from colorfight.constants import BLD_GOLD_MINE, BLD_ENERGY_WELL, BLD_FORTRESS, BUILDING_COST
 
 energy_weight = 1
-dist_weight = 1
+dist_weight = 20
 attack_weight = 1
-expand_dist_weight = 1
-nat_energy_weight = 1
+expand_dist_weight = 20
+nat_energy_weight = 0.1
 user_homes = {}
 my_uid = 0
 energy_well_cnt = 0
@@ -83,6 +83,8 @@ def play_game(
             # the same game. If it's not, break out
             if not game.update_turn():
                 break
+
+            # if we reach certain threashold for number of cells owned, keep a mines ratio
     
             # Check if you exist in the game. If not, wait for the next round.
             # You may not appear immediately after you join. But you should be 
@@ -98,6 +100,17 @@ def play_game(
 
             if not user_homes:
                 get_homes()
+
+            adj_cells = get_my_adj_cells(me.cells.values())
+            adj_cells.sort(key=get_expansion_value, reverse=True)
+
+            for cell in adj_cells:
+                if cell.attack_cost < me.energy and cell.position not in my_attack_list:
+                    cmd_list.append(game.attack(cell.position, cell.attack_cost))
+                    print("We are attacking ({}, {}) with {} energy".format(cell.position.x, cell.position.y, cell.attack_cost))
+                    me.energy -= cell.attack_cost
+                    my_attack_list.append(cell.position)
+
             # game.me.cells is a dict, where the keys are Position and the values
             # are MapCell. Get all my cells.
             my_cells = get_my_cells(me.cells.values())
@@ -113,19 +126,24 @@ def play_game(
                     print("We build {} on ({}, {})".format(building, cell.position.x, cell.position.y))
                     me.gold -= 200
                     energy_well_cnt += 1
+                elif cell.owner == me.uid and cell.building.can_upgrade and me.gold >= cell.building.upgrade_gold and cell.building.level < me.tech_level:
+                    cmd_list.append(game.upgrade(cell.position))
+                    print("We upgraded ({}, {})".format(cell.position.x, cell.position.y))
+                    me.gold   -= cell.building.upgrade_gold
+                    me.energy -= cell.building.upgrade_energy
 
+            if me.tech_level == 1 and me.gold > 1000 and me.energy > 1000:
+                cmd_list.append(game.upgrade(user_homes[my_uid].position))
+                print("We upgraded home at ({}, {})".format(user_homes[my_uid].position.x, user_homes[my_uid].position.y))
+                me.gold -= 1000
+                me.energy -= 1000
+            elif me.tech_level == 2 and me.gold > 2000 and me.energy > 2000:
+                cmd_list.append(game.upgrade(user_homes[my_uid].position))
+                print("We upgraded home at ({}, {})".format(user_homes[my_uid].position.x, user_homes[my_uid].position.y))
+                me.gold -= 2000
+                me.energy -= 2000
 
-            adj_cells = get_my_adj_cells(me.cells.values())
-            adj_cells.sort(key=get_expansion_value, reverse=True)
-
-            for cell in adj_cells:
-                if cell.attack_cost < me.energy and cell.position not in my_attack_list:
-                    cmd_list.append(game.attack(cell.position, cell.attack_cost))
-                    print("We are attacking ({}, {}) with {} energy".format(cell.position.x, cell.position.y, cell.attack_cost))
-                    me.energy -= cell.attack_cost
-                    my_attack_list.append(cell.position)
-
-            for cell in me.cells.values():
+            # for cell in me.cells.values():
                 # Check the surrounding position
                 '''for pos in cell.position.get_surrounding_cardinals():
                     # Get the MapCell object of that position
@@ -149,14 +167,14 @@ def play_game(
                 # If we can upgrade the building, upgrade it.
                 # Notice can_update only checks for upper bound. You need to check
                 # tech_level by yourself. 
-                if cell.building.can_upgrade and \
+                '''if cell.building.can_upgrade and \
                         (cell.building.is_home or cell.building.level < me.tech_level) and \
                         cell.building.upgrade_gold < me.gold and \
                         cell.building.upgrade_energy < me.energy:
                     cmd_list.append(game.upgrade(cell.position))
                     print("We upgraded ({}, {})".format(cell.position.x, cell.position.y))
                     me.gold   -= cell.building.upgrade_gold
-                    me.energy -= cell.building.upgrade_energy
+                    me.energy -= cell.building.upgrade_energy'''
                     
                 # Build a random building if we have enough gold
                 '''if cell.owner == me.uid and cell.building.is_empty and me.gold >= BUILDING_COST[0]:
@@ -186,23 +204,23 @@ if __name__ == '__main__':
     room = 'public' # Delete this line if you have a room from above
 
     # ==========================  Play game once ===========================
-    play_game(
-        game     = game, \
-        room     = room, \
-        username = 'ExampleAI' + str(random.randint(1, 100)), \
-        password = str(int(time.time()))
-    )
+    #play_game(
+    #    game     = game, \
+    #    room     = room, \
+    #    username = 'nani ' + str(random.randint(1, 100)), \
+    #    password = str(int(time.time()))
+    #)
     # ======================================================================
 
     # ========================= Run my bot forever =========================
-    #while True:
-    #    try:
-    #        play_game(
-    #            game     = game, \
-    #            room     = room, \
-    #            username = 'ExampleAI' + str(random.randint(1, 100)), \
-    #            password = str(int(time.time()))
-    #        )
-    #    except Exception as e:
-    #        print(e)
-    #        time.sleep(2)
+    while True:
+        try:
+            play_game(
+                game     = game, \
+                room     = room, \
+                username = 'nani ' + str(random.randint(1, 100)), \
+                password = str(int(time.time()))
+            )
+        except Exception as e:
+            print(e)
+            time.sleep(2)
