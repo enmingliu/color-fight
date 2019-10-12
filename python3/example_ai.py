@@ -1,7 +1,55 @@
 from colorfight import Colorfight
 import time
 import random
+import math
 from colorfight.constants import BLD_GOLD_MINE, BLD_ENERGY_WELL, BLD_FORTRESS, BUILDING_COST
+
+energy_weight = 1
+dist_weight = 1
+attack_weight = 1
+expand_dist_weight = 1
+nat_energy_weight = 1
+user_homes = {}
+my_uid = 0
+energy_well_cnt = 0
+cur_game = None
+
+def get_homes():
+    global user_homes
+    for i in range(cur_game.width):
+        for j in range(cur_game.height):
+            cell = cur_game.game_map[(i, j)]
+            if cell.is_home:
+                user_homes[cell.owner] = cell
+
+def get_my_cells(cells_dict):
+    my_cells = []
+    for cell in cells_dict:
+        if cell.owner == my_uid:
+            my_cells.append(cell)
+    return my_cells
+
+def get_my_adj_cells(cells_dict):
+    my_adj_cells = []
+    for cell in cells_dict:
+        for adj_pos in cell.position.get_surrounding_cardinals():
+            c = cur_game.game_map[adj_pos]
+            if c.owner != my_uid and c not in my_adj_cells:
+                my_adj_cells.append(c)
+    return my_adj_cells
+    
+def get_upgrade_value(cell):
+    if cell.position.x == user_homes[my_uid].position.x and cell.position.y == user_homes[my_uid].position.y:
+        return 0
+    energy_val = cell.energy * energy_weight
+    dist_val = 1/(math.sqrt((cell.position.x - user_homes[my_uid].position.x)**2 + (cell.position.y - user_homes[my_uid].position.y)**2)) * dist_weight
+    return energy_val + dist_val
+
+def get_expansion_value(cell):
+    attack_val = 1/cell.attack_cost * attack_weight
+    dist_val = 1/(math.sqrt((cell.position.x - user_homes[my_uid].position.x)**2 + (cell.position.y - user_homes[my_uid].position.y)**2)) * expand_dist_weight
+    natural_energy_val = cell.natural_energy * nat_energy_weight
+    return attack_val + dist_val + natural_energy_val
 
 def play_game(
         game, \
@@ -42,13 +90,44 @@ def play_game(
             if game.me == None:
                 continue
     
+            global cur_game
+            cur_game = game
             me = game.me
-    
+            global my_uid
+            my_uid = me.uid
+
+            if not user_homes:
+                get_homes()
             # game.me.cells is a dict, where the keys are Position and the values
             # are MapCell. Get all my cells.
-            for cell in game.me.cells.values():
+            my_cells = get_my_cells(me.cells.values())
+            my_cells.sort(key=get_upgrade_value, reverse=True)
+
+            global energy_well_cnt
+            for cell in my_cells:
+                if cell.owner == me.uid and cell.building.is_empty and me.gold >= BUILDING_COST[0]:
+                    building = BLD_ENERGY_WELL
+                    if not (energy_well_cnt % 3) and energy_well_cnt != 0:
+                        building = BLD_FORTRESS
+                    cmd_list.append(game.build(cell.position, building))
+                    print("We build {} on ({}, {})".format(building, cell.position.x, cell.position.y))
+                    me.gold -= 200
+                    energy_well_cnt += 1
+
+
+            adj_cells = get_my_adj_cells(me.cells.values())
+            adj_cells.sort(key=get_expansion_value, reverse=True)
+
+            for cell in adj_cells:
+                if cell.attack_cost < me.energy and cell.position not in my_attack_list:
+                    cmd_list.append(game.attack(cell.position, cell.attack_cost))
+                    print("We are attacking ({}, {}) with {} energy".format(cell.position.x, cell.position.y, cell.attack_cost))
+                    me.energy -= cell.attack_cost
+                    my_attack_list.append(cell.position)
+
+            for cell in me.cells.values():
                 # Check the surrounding position
-                for pos in cell.position.get_surrounding_cardinals():
+                '''for pos in cell.position.get_surrounding_cardinals():
                     # Get the MapCell object of that position
                     c = game.game_map[pos]
                     # Attack if the cost is less than what I have, and the owner
@@ -64,9 +143,9 @@ def play_game(
                         # the same cell
                         cmd_list.append(game.attack(pos, c.attack_cost))
                         print("We are attacking ({}, {}) with {} energy".format(pos.x, pos.y, c.attack_cost))
-                        game.me.energy -= c.attack_cost
-                        my_attack_list.append(c.position)
-    
+                        me.energy -= c.attack_cost
+                        my_attack_list.append(c.position)'''
+
                 # If we can upgrade the building, upgrade it.
                 # Notice can_update only checks for upper bound. You need to check
                 # tech_level by yourself. 
@@ -80,11 +159,11 @@ def play_game(
                     me.energy -= cell.building.upgrade_energy
                     
                 # Build a random building if we have enough gold
-                if cell.owner == me.uid and cell.building.is_empty and me.gold >= BUILDING_COST[0]:
+                '''if cell.owner == me.uid and cell.building.is_empty and me.gold >= BUILDING_COST[0]:
                     building = random.choice([BLD_FORTRESS, BLD_GOLD_MINE, BLD_ENERGY_WELL])
                     cmd_list.append(game.build(cell.position, building))
                     print("We build {} on ({}, {})".format(building, cell.position.x, cell.position.y))
-                    me.gold -= 100
+                    me.gold -= 100'''
     
             
             # Send the command list to the server
