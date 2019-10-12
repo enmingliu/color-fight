@@ -13,6 +13,8 @@ user_homes = {}
 my_uid = 0
 energy_well_cnt = 0
 convert_ratio = 1/3
+threshold = 150
+building_threshold = 125
 cur_game = None
 
 def get_homes():
@@ -51,6 +53,15 @@ def get_expansion_value(cell):
     dist_val = 1/(math.sqrt((cell.position.x - user_homes[my_uid].position.x)**2 + (cell.position.y - user_homes[my_uid].position.y)**2)) * expand_dist_weight
     natural_energy_val = cell.natural_energy * nat_energy_weight
     return attack_val + dist_val + natural_energy_val
+
+def check_building_threshold(cells_dict):
+    upgraded_cnt = 0
+    for cell in cells_dict:
+        if cell.building.level == 3:
+            upgraded_cnt += 1
+            if upgraded_cnt >= building_threshold:
+                return True
+    return False;            
 
 def play_game(
         game, \
@@ -105,12 +116,13 @@ def play_game(
             adj_cells = get_my_adj_cells(me.cells.values())
             adj_cells.sort(key=get_expansion_value, reverse=True)
 
-            for cell in adj_cells:
-                if cell.attack_cost < me.energy and cell.position not in my_attack_list:
-                    cmd_list.append(game.attack(cell.position, cell.attack_cost))
-                    print("We are attacking ({}, {}) with {} energy".format(cell.position.x, cell.position.y, cell.attack_cost))
-                    me.energy -= cell.attack_cost
-                    my_attack_list.append(cell.position)
+            if not (len(me.cells) > threshold and not check_building_threshold(me.cells.values())):
+                for cell in adj_cells:
+                    if cell.attack_cost < me.energy and cell.position not in my_attack_list:
+                        cmd_list.append(game.attack(cell.position, cell.attack_cost))
+                        print("We are attacking ({}, {}) with {} energy".format(cell.position.x, cell.position.y, cell.attack_cost))
+                        me.energy -= cell.attack_cost
+                        my_attack_list.append(cell.position)
 
             if me.tech_level == 1 and me.gold > 1000 and me.energy > 1000:
                 cmd_list.append(game.upgrade(user_homes[my_uid].position))
@@ -146,9 +158,7 @@ def play_game(
                     print("We upgraded ({}, {})".format(cell.position.x, cell.position.y))
                     me.gold   -= cell.building.upgrade_gold
                     me.energy -= cell.building.upgrade_energy
-
-            
-
+            # close to threshold, home.level == 3, 
             # for cell in me.cells.values():
                 # Check the surrounding position
                 '''for pos in cell.position.get_surrounding_cardinals():
@@ -206,7 +216,7 @@ if __name__ == '__main__':
     #rank_room = [room for room in room_list if room["rank"] and room["player_number"] < room["max_player"]]
     #room = random.choice(rank_room)["name"]
     # ======================================================================
-    room = 'Official_4_player' # Delete this line if you have a room from above
+    room = 'public' # Delete this line if you have a room from above
 
     # ==========================  Play game once ===========================
     #play_game(
