@@ -12,6 +12,7 @@ nat_energy_weight = 0.1
 user_homes = {}
 my_uid = 0
 energy_well_cnt = 0
+convert_ratio = 1/3
 cur_game = None
 
 def get_homes():
@@ -120,8 +121,11 @@ def play_game(
             for cell in my_cells:
                 if cell.owner == me.uid and cell.building.is_empty and me.gold >= BUILDING_COST[0]:
                     building = BLD_ENERGY_WELL
-                    if not (energy_well_cnt % 3) and energy_well_cnt != 0:
+                    if(len(me.cells) / (game.width * game.height) > convert_ratio):
+                        building = BLD_GOLD_MINE
+                    if not (energy_well_cnt % 4) and energy_well_cnt != 0:
                         building = BLD_FORTRESS
+
                     cmd_list.append(game.build(cell.position, building))
                     print("We build {} on ({}, {})".format(building, cell.position.x, cell.position.y))
                     me.gold -= 200
@@ -201,7 +205,7 @@ if __name__ == '__main__':
     #rank_room = [room for room in room_list if room["rank"] and room["player_number"] < room["max_player"]]
     #room = random.choice(rank_room)["name"]
     # ======================================================================
-    room = 'public' # Delete this line if you have a room from above
+    room = 'Official_4_player' # Delete this line if you have a room from above
 
     # ==========================  Play game once ===========================
     #play_game(
