@@ -59,7 +59,7 @@ def get_expansion_value(cell):
 def check_building_threshold(cells_dict):
     upgraded_cnt = 0
     for cell in cells_dict:
-        if cell.building.level == 2:
+        if cell.building.level == 3:
             upgraded_cnt += 1
             if upgraded_cnt >= building_threshold:
                 return True
@@ -248,7 +248,7 @@ if __name__ == '__main__':
     #rank_room = [room for room in room_list if room["rank"] and room["player_number"] < room["max_player"]]
     #room = random.choice(rank_room)["name"]
     # ======================================================================
-    room = 'test1' # Delete this line if you have a room from above
+    room = 'public' # Delete this line if you have a room from above
 
     # ==========================  Play game once ===========================
     play_game(
