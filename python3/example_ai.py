@@ -6,15 +6,15 @@ from colorfight.constants import BLD_GOLD_MINE, BLD_ENERGY_WELL, BLD_FORTRESS, B
 
 energy_weight = 1
 dist_weight = 20
-attack_weight = 1
+attack_weight = 3
 expand_dist_weight = 20
 nat_energy_weight = 0.1
 user_homes = {}
 my_uid = 0
 energy_well_cnt = 0
 convert_ratio = 1/2
-threshold = 150
-building_threshold = 100
+threshold = 125
+building_threshold = 65
 cur_game = None
 
 def get_homes():
@@ -142,7 +142,9 @@ def play_game(
             adj_cells = get_my_adj_cells(me.cells.values())
             adj_cells.sort(key=get_expansion_value, reverse=True)
 
-            if not (len(me.cells) > threshold and not check_building_threshold(me.cells.values())):
+            shouldnt_turtle = check_building_threshold(me.cells.values())
+
+            if not (len(me.cells) > threshold and not shouldnt_turtle):
                 for cell in adj_cells:
                     if cell.attack_cost < me.energy and cell.position not in my_attack_list:
                         cmd_list.append(game.attack(cell.position, cell.attack_cost))
@@ -170,7 +172,7 @@ def play_game(
             for cell in my_cells:
                 if cell.owner == me.uid and cell.building.is_empty and me.gold >= BUILDING_COST[0]:
                     building = BLD_ENERGY_WELL
-                    if not (energy_well_cnt % 4) and energy_well_cnt != 0:
+                    if cell.natural_gold > 7:
                         building = BLD_GOLD_MINE
                     for adj_pos in cell.position.get_surrounding_cardinals():
                         if game.game_map[adj_pos].owner != me.uid and game.game_map[adj_pos].owner != 0:
@@ -246,7 +248,7 @@ if __name__ == '__main__':
     #rank_room = [room for room in room_list if room["rank"] and room["player_number"] < room["max_player"]]
     #room = random.choice(rank_room)["name"]
     # ======================================================================
-    room = 'public' # Delete this line if you have a room from above
+    room = 'test1' # Delete this line if you have a room from above
 
     # ==========================  Play game once ===========================
     #play_game(
