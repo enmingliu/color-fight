@@ -251,23 +251,23 @@ if __name__ == '__main__':
     room = 'test1' # Delete this line if you have a room from above
 
     # ==========================  Play game once ===========================
-    #play_game(
-    #    game     = game, \
-    #    room     = room, \
-    #    username = 'nani ' + str(random.randint(1, 100)), \
-    #    password = str(int(time.time()))
-    #)
+    play_game(
+        game     = game, \
+        room     = room, \
+        username = 'nani ' + str(random.randint(1, 100)), \
+        password = str(int(time.time()))
+    )
     # ======================================================================
 
     # ========================= Run my bot forever =========================
-    while True:
-        try:
-            play_game(
-                game     = game, \
-                room     = room, \
-                username = 'nani ' + str(random.randint(1, 100)), \
-                password = str(int(time.time()))
-            )
-        except Exception as e:
-            print(e)
-            time.sleep(2)
+    #while True:
+    #    try:
+    #        play_game(
+    #            game     = game, \
+    #            room     = room, \
+    #            username = 'nani ' + str(random.randint(1, 100)), \
+    #            password = str(int(time.time()))
+    #       )
+    #   except Exception as e:
+    #       print(e)
+    #        time.sleep(2)
