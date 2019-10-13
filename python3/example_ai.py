@@ -65,6 +65,27 @@ def check_building_threshold(cells_dict):
                 return True
     return False;            
 
+def check_home_destroyed(cells_dict):
+    for cell in cells_dict:
+        if cell.building.is_home and cell.owner == my_uid:
+            return False
+    return True
+
+def get_cell_close_to_corner(cells_dict):
+    minimum_dist = -1
+    cell_to_return = None
+    for cell in cells_dict:
+        if cell.owner == my_uid:
+            for (x, y) in [(0,0), (0, 29), (29, 0), (29, 29)]:
+                if get_dist(x, y, cell.position.x, cell.position.y) < minimum_dist:
+                    minimum_dist = get_dist(x, y, cell.position.x, cell.position.y)
+                    cell_to_return = cell
+
+    return cell_to_return
+
+def get_dist(x, y, i, j):
+    return 1/(math.sqrt((x - i)**2 + (y - j)**2)) 
+
 def play_game(
         game, \
         room     = 'public', \
@@ -114,6 +135,9 @@ def play_game(
 
             if not user_homes:
                 get_homes()
+
+            if check_home_destroyed(me.cells.values()):
+                cmd_list.append(game.build(get_cell_close_to_corner(me.cells.values()), BLD_HOME))
 
             adj_cells = get_my_adj_cells(me.cells.values())
             adj_cells.sort(key=get_expansion_value, reverse=True)
