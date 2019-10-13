@@ -5,16 +5,16 @@ import math
 from colorfight.constants import BLD_GOLD_MINE, BLD_ENERGY_WELL, BLD_FORTRESS, BUILDING_COST
 
 energy_weight = 1
-dist_weight = 20
+dist_weight = 5
 attack_weight = 3
-expand_dist_weight = 20
+expand_dist_weight = 5
 nat_energy_weight = 0.1
 user_homes = {}
 my_uid = 0
 energy_well_cnt = 0
-convert_ratio = 1/2
+convert_ratio = 3/4
 threshold = 125
-building_threshold = 65
+building_threshold = 75
 cur_game = None
 
 def get_homes():
@@ -52,6 +52,8 @@ def get_expansion_value(cell):
     if cell.position.x == user_homes[my_uid].position.x and cell.position.y == user_homes[my_uid].position.y:
         return 0
     attack_val = 1/cell.attack_cost * attack_weight
+    if(cell.owner == 0):
+        attack_val * 1.5
     dist_val = 1/(math.sqrt((cell.position.x - user_homes[my_uid].position.x)**2 + (cell.position.y - user_homes[my_uid].position.y)**2)) * expand_dist_weight
     natural_energy_val = cell.natural_energy * nat_energy_weight
     return attack_val + dist_val + natural_energy_val
@@ -178,7 +180,7 @@ def play_game(
                         if game.game_map[adj_pos].owner != me.uid and game.game_map[adj_pos].owner != 0:
                             building = BLD_FORTRESS
                             break
-                    if(len(me.cells) / (game.width * game.height) > convert_ratio):
+                    if(len(me.cells) / (game.width * game.height) > convert_ratio) or game.turn > 250:
                         building = BLD_GOLD_MINE
 
                     cmd_list.append(game.build(cell.position, building))
@@ -186,10 +188,11 @@ def play_game(
                     me.gold -= 200
                     energy_well_cnt += 1
                 elif cell.owner == me.uid and cell.building.can_upgrade and me.gold >= cell.building.upgrade_gold and cell.building.level < me.tech_level:
-                    cmd_list.append(game.upgrade(cell.position))
-                    print("We upgraded ({}, {})".format(cell.position.x, cell.position.y))
-                    me.gold   -= cell.building.upgrade_gold
-                    me.energy -= cell.building.upgrade_energy
+                    if not ((len(me.cells) / (game.width * game.height) > convert_ratio) and not cell.building == BLD_GOLD_MINE) or (shouldnt_turtle and len(me.cells) > threshold) or cell.building == BLD_GOLD_MINE:
+                        cmd_list.append(game.upgrade(cell.position))
+                        print("We upgraded ({}, {})".format(cell.position.x, cell.position.y))
+                        me.gold   -= cell.building.upgrade_gold
+                        me.energy -= cell.building.upgrade_energy
             # close to threshold, home.level == 3, 
             # for cell in me.cells.values():
                 # Check the surrounding position
@@ -248,13 +251,13 @@ if __name__ == '__main__':
     #rank_room = [room for room in room_list if room["rank"] and room["player_number"] < room["max_player"]]
     #room = random.choice(rank_room)["name"]
     # ======================================================================
-    room = 'public' # Delete this line if you have a room from above
+    room = 'official_group_B' # Delete this line if you have a room from above
 
     # ==========================  Play game once ===========================
     play_game(
         game     = game, \
         room     = room, \
-        username = 'nani ' + str(random.randint(1, 100)), \
+        username = 'wedontknow', \
         password = str(int(time.time()))
     )
     # ======================================================================
