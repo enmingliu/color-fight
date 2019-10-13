@@ -49,6 +49,8 @@ def get_upgrade_value(cell):
     return energy_val + dist_val
 
 def get_expansion_value(cell):
+    if cell.position.x == user_homes[my_uid].position.x and cell.position.y == user_homes[my_uid].position.y:
+        return 0
     attack_val = 1/cell.attack_cost * attack_weight
     dist_val = 1/(math.sqrt((cell.position.x - user_homes[my_uid].position.x)**2 + (cell.position.y - user_homes[my_uid].position.y)**2)) * expand_dist_weight
     natural_energy_val = cell.natural_energy * nat_energy_weight
@@ -57,7 +59,7 @@ def get_expansion_value(cell):
 def check_building_threshold(cells_dict):
     upgraded_cnt = 0
     for cell in cells_dict:
-        if cell.building.level == 3:
+        if cell.building.level == 2:
             upgraded_cnt += 1
             if upgraded_cnt >= building_threshold:
                 return True
@@ -144,9 +146,13 @@ def play_game(
             for cell in my_cells:
                 if cell.owner == me.uid and cell.building.is_empty and me.gold >= BUILDING_COST[0]:
                     building = BLD_ENERGY_WELL
-                    if(len(me.cells) / (game.width * game.height) > convert_ratio):
-                        building = BLD_GOLD_MINE
                     if not (energy_well_cnt % 4) and energy_well_cnt != 0:
+                        building = BLD_GOLD_MINE
+                    for adj_pos in cell.position.get_surrounding_cardinals():
+                        if game.game_map[adj_pos].owner != me.uid and game.game_map[adj_pos].owner != 0:
+                            building = BLD_FORTRESS
+                            break
+                    if(len(me.cells) / (game.width * game.height) > convert_ratio):
                         building = BLD_GOLD_MINE
 
                     cmd_list.append(game.build(cell.position, building))
